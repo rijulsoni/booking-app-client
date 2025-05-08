@@ -7,6 +7,8 @@ import allRoomsReducer from "../slices/allRoomsSlice";
 import featuredRoomsReducer from "../slices/featuredRoomSlice";
 import hotelSearchReducer from "../slices/searchHotelSlice";
 import allHotelsReducer from "../slices/allHotelSlice";
+import bookingReducer from "../slices/bookingSlice";
+import myBookingReducer from "../slices/myBookingSlice";
 export const store = configureStore({
   reducer: {
     user: userReducer,
@@ -17,6 +19,8 @@ export const store = configureStore({
     featuredRooms: featuredRoomsReducer,
     hotelSearch: hotelSearchReducer,
     allHotels: allHotelsReducer,
+    booking: bookingReducer,
+    myBooking: myBookingReducer,
   },
 });
 

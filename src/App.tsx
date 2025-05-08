@@ -18,6 +18,9 @@ import NotFound from "./pages/NotFound";
 import { RootState } from "./redux/store/store";
 import { fetchUser } from "./redux/slices/userSlice";
 import RoomDetails from "./pages/RoomDetails";
+import Checkout from "./pages/Checkout";
+import MyBookings from "./pages/MyBooking";
+import PrivateRoute from "./pages/PrivateRoute";
 
 const queryClient = new QueryClient();
 
@@ -49,6 +52,10 @@ const App = () => {
             <Route path="/contact" element={<Contact />} />
             <Route path="/signin" element={<SignIn />} />
             <Route path="/register" element={<Register />} />
+            <Route element={<PrivateRoute />}>
+            <Route path="/checkout" element={<Checkout />} />
+            <Route path="/bookings" element={<MyBookings />} />
+            </Route>
             {/* Catch-all 404 route */}
             <Route path="*" element={<NotFound />} />
           </Routes>

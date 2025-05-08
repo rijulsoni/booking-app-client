@@ -31,19 +31,27 @@ const Header = () => {
         </Link>
 
         <nav className="hidden md:flex items-center space-x-6">
-          {["hotels", "bookings", "about", "contact"].map((path) => (
+          {["hotels", "about", "contact"].map((path) => (
             <Link
               key={path}
               to={`/${path}`}
               className="text-gray-700 hover:text-hotel-blue transition-colors capitalize"
             >
               {path === "hotels" ? "Browse Hotels" :
-                path === "bookings" ? "My Bookings" :
-                  path === "about" ? "About Us" :
-                    "Contact"}
+                path === "about" ? "About Us" :
+                  "Contact"}
             </Link>
           ))}
+          {userInfo && (
+            <Link
+              to="/bookings"
+              className="text-gray-700 hover:text-hotel-blue transition-colors capitalize"
+            >
+              My Bookings
+            </Link>
+          )}
         </nav>
+
 
         <div className="flex items-center space-x-3">
           {status === "loading" ? (

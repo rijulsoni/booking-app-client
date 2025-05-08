@@ -155,6 +155,7 @@ console.log(rooms)
               guests={guests}
               setGuests={setGuests}
               hotelId={id}
+              hotelName={hotel?.name}
             />
           </div>
         </div>

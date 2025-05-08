@@ -1,14 +1,18 @@
 import { format } from "date-fns";
-import { CalendarIcon, CheckIcon } from "lucide-react";
+import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
+import { useDispatch, useSelector } from "react-redux";
+import { setBookingDetails } from "@/redux/slices/bookingSlice";
+import { useNavigate } from "react-router-dom";
+import { RootState } from "@/redux/store/store";
 
 interface BookingFormProps {
-    rooms: any[]; // Replace 'any' with proper room type if available
+    rooms: any[] | any;
     selectedRoom: string | null;
     setSelectedRoom: (roomId: string | null) => void;
     checkIn: Date | undefined;
@@ -18,6 +22,7 @@ interface BookingFormProps {
     guests: string;
     setGuests: (guests: string) => void;
     hotelId: string | undefined;
+    hotelName: string | undefined;
 }
 
 const BookingForm = ({
@@ -31,14 +36,36 @@ const BookingForm = ({
     guests,
     setGuests,
     hotelId,
+    hotelName,
 }: BookingFormProps) => {
+    const dispatch = useDispatch();
+    const navigate = useNavigate();
+    console.log(rooms)
+const { userInfo } = useSelector((state: RootState) => state.user);
+    const selectedRoomDetails = rooms?.find((room: any) => room._id === selectedRoom);
+    const nights = checkIn && checkOut
+        ? Math.max(1, Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24)))
+        : 0;
+
+    const formatPrice = (price: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(price);
+
     const calculateTotalPrice = () => {
-        if (!selectedRoom || !checkIn || !checkOut) return null;
+        if (!selectedRoomDetails || nights <= 0) return null;
 
-        const selectedRoomDetails = rooms?.find((room: any) => room._id === selectedRoom);
-        const nights = Math.max(1, Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24)));
+        // Base price and discounted price calculation
+        const basePrice = selectedRoomDetails.price * nights;
+        const discount = selectedRoomDetails.discount || 0;
+        const discountedPrice = basePrice - (basePrice * discount / 100);
 
-        return selectedRoomDetails?.price * nights;
+        const gst = discountedPrice * 0.18;
+
+        // Platform fee (20)
+        const platformFee = 20;
+
+        // Total price including discount, GST, and platform fee
+        const totalPrice = discountedPrice + gst + platformFee;
+
+        return totalPrice.toFixed(2); // Return the total price formatted to two decimal places
     };
 
     const handleBooking = () => {
@@ -47,41 +74,81 @@ const BookingForm = ({
             return;
         }
 
-        const selectedRoomDetails = rooms?.find((room: any) => room._id === selectedRoom);
+        if (!userInfo) {
+            toast.error("Please login to book a room");
+            navigate("/signin");
+            return;
+        }
 
-        toast.success(`Booking successful! ${selectedRoomDetails?.name} has been reserved.`);
+        toast.success("Redirecting to checkout page");
 
-        console.log("Booking details:", {
-            hotelId,
-            roomId: selectedRoom,
-            roomName: selectedRoomDetails?.name,
-            checkIn: format(checkIn, "MMM dd, yyyy"),
-            checkOut: format(checkOut, "MMM dd, yyyy"),
-            guests,
-            totalPrice: selectedRoomDetails?.price *
-              Math.max(1, Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24))),
-        });
+        const selectedRoomDetails = rooms?.find((room) => room._id === selectedRoom);
+        const nights = checkIn && checkOut
+            ? Math.max(1, Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24)))
+            : 0;
+
+        if (selectedRoomDetails && nights > 0) {
+            // Base price and discounted price calculation
+            const basePrice = selectedRoomDetails.price * nights;
+            const discount = selectedRoomDetails.discount || 0;
+            const discountedPrice = basePrice - (basePrice * discount / 100);
+
+            // GST calculation (18%)
+            const gst = discountedPrice * 0.18;
+
+            // Platform fee (20)
+            const platformFee = 20;
+
+            // Total price including discount, GST, and platform fee
+            const totalPrice = discountedPrice + gst + platformFee;
+
+            // Dispatch booking details
+            dispatch(setBookingDetails({
+                hotelId,
+                hotelName,
+                roomId: selectedRoom,
+                roomName: selectedRoomDetails.name,
+                roomType: selectedRoomDetails.room_type,
+                roomImage: selectedRoomDetails.image,
+                checkIn,
+                checkOut,
+                guests,
+                roomPrice: selectedRoomDetails.price,
+                nights,
+                totalPrice: totalPrice.toFixed(2), // formatted total price
+                gst: gst.toFixed(2), // formatted GST
+                platformFee: platformFee.toFixed(2), // formatted platform fee
+            }));
+
+            setTimeout(() => {
+                navigate('/checkout');
+            }, 1000);
+        }
     };
+    console.log(rooms)
 
     return (
-        <div className="lg:w-1/3" id="booking-form"> {
-            rooms?.length > 0 ? (
+        <div className="lg:w-1/3" id="booking-form">
+            {rooms?.length > 0 ? (
                 <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100">
                     <h2 className="text-xl font-semibold text-hotel-blue mb-4">Book Your Stay</h2>
 
                     <div className="space-y-4">
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Select Room</label>
-                            <Select value={selectedRoom?.toString()} onValueChange={(value) => setSelectedRoom(value)}>
+                            <Select value={selectedRoom?.toString()} onValueChange={setSelectedRoom}>
                                 <SelectTrigger>
                                     <SelectValue placeholder="Choose a room" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    {rooms?.map((room: any) => (
-                                        <SelectItem key={room._id} value={room._id.toString()}>
-                                            {room.name} - {room.price}/night
-                                        </SelectItem>
-                                    ))}
+                                    {rooms
+                                        ?.filter((room: any) => room.availability === true)
+                                        ?.map((room: any) => (
+                                            <SelectItem key={room._id} value={room._id.toString()}>
+                                                {room.name} - {formatPrice(room.price)}/night
+                                            </SelectItem>
+                                        ))}
+
                                 </SelectContent>
                             </Select>
                         </div>
@@ -91,7 +158,7 @@ const BookingForm = ({
                             <Popover>
                                 <PopoverTrigger asChild>
                                     <Button
-                                        variant={"outline"}
+                                        variant="outline"
                                         className={cn(
                                             "w-full justify-start text-left font-normal",
                                             !checkIn && "text-muted-foreground"
@@ -123,7 +190,7 @@ const BookingForm = ({
                             <Popover>
                                 <PopoverTrigger asChild>
                                     <Button
-                                        variant={"outline"}
+                                        variant="outline"
                                         className={cn(
                                             "w-full justify-start text-left font-normal",
                                             !checkOut && "text-muted-foreground",
@@ -163,45 +230,54 @@ const BookingForm = ({
                             </Select>
                         </div>
 
-                        {calculateTotalPrice() && (
-                            <div className="border-t pt-4 mt-4">
+                        {selectedRoomDetails && nights > 0 && (
+                            <>
                                 <div className="flex justify-between mb-2">
                                     <span className="text-gray-600">Room price</span>
-                                    <span className="text-gray-800">
-                                        {rooms?.find((room: any) => room._id === selectedRoom)?.price}
-                                    </span>
+                                    <span className="text-gray-800">{formatPrice(selectedRoomDetails.price)}</span>
                                 </div>
                                 <div className="flex justify-between mb-2">
-                                    <span className="text-gray-600">
-                                        {checkIn && checkOut
-                                            ? `${Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24))} nights`
-                                            : "0 nights"}
-                                    </span>
+                                    <span className="text-gray-600">{nights} nights</span>
                                     <span className="text-gray-800">
-                                        {checkIn && checkOut
-                                            ? `${Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24))}`
-                                            : "0"} x {rooms?.find((room: any) => room._id === selectedRoom)?.price}
+                                        {nights} x {formatPrice(selectedRoomDetails.price)}
                                     </span>
                                 </div>
-                                <div className="flex justify-between font-semibold">
-                                    <span>Total</span>
-                                    <span className="text-hotel-blue">{calculateTotalPrice()}</span>
+                                {selectedRoomDetails.discount > 0 && (
+                                    <div className="flex justify-between mb-2 text-green-600">
+                                        <span>Discount ({selectedRoomDetails.discount}%)</span>
+                                        <span>
+                                            -{(selectedRoomDetails.price * nights * selectedRoomDetails.discount / 100).toFixed(2)}
+                                        </span>
+                                    </div>
+                                )}
+                                <div className="flex justify-between mb-2">
+                                    <span className="text-gray-600">GST (18%)</span>
+                                    <span className="text-gray-800">
+                                        {formatPrice(Number((selectedRoomDetails.price * nights * 0.18).toFixed(2)))}
+                                    </span>
                                 </div>
-                            </div>
+                                <div className="flex justify-between mb-4">
+                                    <span className="text-gray-600">Platform Fee</span>
+                                    <span className="text-gray-800">₹ 20</span>
+                                </div>
+                                <div className="flex justify-between mb-4 font-semibold text-lg">
+                                    <span>Total</span>
+                                    <span className="text-hotel-blue">{formatPrice(Number(calculateTotalPrice()))}</span>
+                                </div>
+                            </>
                         )}
 
                         <Button
-                            className="w-full bg-hotel-blue hover:bg-hotel-dark-blue"
                             onClick={handleBooking}
+                            className="w-full bg-hotel-blue text-white mt-4"
                             disabled={!selectedRoom || !checkIn || !checkOut}
                         >
                             Book Now
                         </Button>
                     </div>
-                </div>) : (
-                <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100">
-                    <h2 className="text-xl font-semibold text-hotel-blue mb-4">No available rooms</h2>
                 </div>
+            ) : (
+                <p>No rooms available</p>
             )}
         </div>
     );

@@ -51,7 +51,7 @@ const HotelInfoTabs = ({ hotel, amenities, rooms, selectedRoom, setSelectedRoom 
                                 <Link
                                     to={`/hotels/${room.hotel_id}/room/${room._id}`}
                                     key={room._id}
-                                    
+
                                 >
 
                                     <div key={room._id} className="border rounded-lg p-4 flex flex-col md:flex-row gap-6">
@@ -82,8 +82,23 @@ const HotelInfoTabs = ({ hotel, amenities, rooms, selectedRoom, setSelectedRoom 
                                             </div>
                                             <div className="flex items-center justify-between mt-4">
                                                 <div>
-                                                    <span className="text-lg font-semibold text-hotel-blue">${room.price}</span>
-                                                    <span className="text-sm text-gray-600"> / night</span>
+                                                    {room.discount ? (
+                                                        <div className="text-sm">
+                                                            <span className="line-through text-gray-500 mr-2">${room.price}</span>
+                                                            <span className="text-lg font-semibold text-green-600">
+                                                                ${room.price - (room.price * room.discount / 100)}
+                                                            </span>
+                                                            <span className="text-sm text-gray-600"> / night</span>
+                                                            <span className="ml-2 text-xs bg-green-100 text-green-700 px-2 py-1 rounded">
+                                                                {room.discount}% OFF
+                                                            </span>
+                                                        </div>
+                                                    ) : (
+                                                        <div>
+                                                            <span className="text-lg font-semibold text-hotel-blue">${room.price}</span>
+                                                            <span className="text-sm text-gray-600"> / night</span>
+                                                        </div>
+                                                    )}
                                                 </div>
 
                                                 <Button
@@ -94,7 +109,7 @@ const HotelInfoTabs = ({ hotel, amenities, rooms, selectedRoom, setSelectedRoom 
                                                         e.stopPropagation(); // prevent triggering Link
                                                         setSelectedRoom(room._id);
                                                         document.getElementById('booking-form')?.scrollIntoView({ behavior: 'smooth' });
-                                                      }}
+                                                    }}
                                                     disabled={!room.availability}
                                                 >
                                                     {!room.availability ? 'Not Available' : selectedRoom === room.id ? 'Selected' : 'Select Room'}

@@ -21,7 +21,7 @@ interface Hotel {
 
 interface HotelState {
     hotel: Hotel | null
-    amenities: any[] | null  // Assuming amenities is an array
+    amenities: any[] | null 
     loading: boolean
     error: string | null
 }
