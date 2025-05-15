@@ -21,6 +21,8 @@ import RoomDetails from "./pages/RoomDetails";
 import Checkout from "./pages/Checkout";
 import MyBookings from "./pages/MyBooking";
 import PrivateRoute from "./pages/PrivateRoute";
+import UserProfile from "./pages/Profile";
+import EditProfile from "./pages/EditProfile";
 
 const queryClient = new QueryClient();
 
@@ -55,6 +57,8 @@ const App = () => {
             <Route element={<PrivateRoute />}>
             <Route path="/checkout" element={<Checkout />} />
             <Route path="/bookings" element={<MyBookings />} />
+            <Route path="/profile" element={<UserProfile />} />
+            <Route path="/profile/edit" element={<EditProfile />} />
             </Route>
             {/* Catch-all 404 route */}
             <Route path="*" element={<NotFound />} />

@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -19,8 +18,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useDispatch } from "react-redux";
-import { AppDispatch } from "@/redux/store/store";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/redux/store/store";
 import { loginUser } from "@/redux/slices/userSlice";
 
 const formSchema = z.object({
@@ -30,9 +29,10 @@ const formSchema = z.object({
 });
 
 const SignIn = () => {
+  const { userInfo, error } = useSelector((state: RootState) => state.user);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-const dispatch = useDispatch<AppDispatch>();
+  const dispatch = useDispatch<AppDispatch>();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -44,11 +44,22 @@ const dispatch = useDispatch<AppDispatch>();
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
     setIsLoading(true);
-    const{ email, password } = values;
+    const { email, password } = values;
     dispatch(loginUser({ email, password }));
-    toast.success("Sign in successful!");
-    navigate("/");
   };
+
+  useEffect(() => {
+    if (isLoading) {
+      if (userInfo) {
+        toast.success("Sign in successful!");
+        setIsLoading(false);
+        navigate("/");
+      } else if (error) {
+        toast.error(error);
+        setIsLoading(false);
+      }
+    }
+  }, [userInfo, error, isLoading, navigate]);
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
@@ -117,9 +128,9 @@ const dispatch = useDispatch<AppDispatch>();
                     </FormItem>
                   )}
                 />
-                <Button 
-                  type="submit" 
-                  className="w-full bg-hotel-blue hover:bg-hotel-dark-blue" 
+                <Button
+                  type="submit"
+                  className="w-full bg-hotel-blue hover:bg-hotel-dark-blue"
                   disabled={isLoading}
                 >
                   {isLoading ? "Signing in..." : "Sign In"}

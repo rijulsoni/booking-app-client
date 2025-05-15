@@ -32,7 +32,7 @@ const UserAvatar = ({ userInfo, onLogout }: UserAvatarProps) => {
         >
           <Avatar className="h-8 w-8 rounded-full">
             <AvatarImage
-              src={userInfo?.avatar}
+              src={userInfo?.profile_picture_url}
               alt={userInfo?.name || "User"}
             />
             <AvatarFallback>

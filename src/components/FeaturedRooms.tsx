@@ -88,11 +88,7 @@ const FeaturedRooms = () => {
                         alt={room.name || "Room image"}
                         className="w-full h-full object-cover"
                       />
-                      {!room.available && (
-                        <Badge className="absolute top-3 right-3 bg-red-500 text-white border-0">
-                          Not Available
-                        </Badge>
-                      )}
+                      
                       {room.discount && room.discount > 0 && (
                         <Badge className="absolute top-3 left-3 bg-hotel-gold text-black border-0">
                           {room.discount}% OFF

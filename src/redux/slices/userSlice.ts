@@ -6,9 +6,9 @@ interface User {
   id: number;
   name: string;
   email: string;
-  token: string;
-  password?: string;
-  password_confirmation?: string;
+  mobile_number: string;
+  bio: string;
+  profile_image: string;
   agreeToTerms?: boolean;
 }
 
@@ -86,6 +86,45 @@ export const fetchUser = createAsyncThunk<
   }
 );
 
+export const editUserProfile = createAsyncThunk<
+  User,
+  Partial<User>,
+  { rejectValue: string }
+>(
+  'user/editUserProfile',
+  async (updatedData, { rejectWithValue }) => {
+    try {
+      const response = await api.put<User>(`/users/${updatedData.id}`, { user: updatedData });
+      return response.data;
+    } catch (error: any) {
+      console.error('Edit profile error:', error.response);
+      return rejectWithValue(
+        error.response?.data?.error || 'Failed to update profile'
+      );
+    }
+  }
+);
+
+export const updateProfileImage = createAsyncThunk(
+  'user/updateProfileImage',
+  async (formData: FormData, { rejectWithValue }) => {
+    try {
+      const response = await api.patch<User>('/users/update_avatar', formData,{
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      console.log(response.data)
+      return response.data;
+    } catch (error: any) {
+      console.error('Update profile image error:', error.response);
+      return rejectWithValue(
+        error.response?.data?.error || 'Failed to update profile image'
+      );
+    }
+  }
+)
+
 
 const userSlice = createSlice({
   name: 'user',
@@ -145,6 +184,18 @@ const userSlice = createSlice({
       .addCase(fetchUser.rejected, (state, action) => {
         state.status = 'failed';
         state.error = action.payload || 'Failed to fetch user';
+      })
+      .addCase(editUserProfile.pending, (state) => {
+        state.status = 'loading';
+        state.error = null;
+      })
+      .addCase(editUserProfile.fulfilled, (state, action: PayloadAction<User>) => {
+        state.status = 'succeeded';
+        state.userInfo = action.payload.user;
+      })
+      .addCase(editUserProfile.rejected, (state, action) => {
+        state.status = 'failed';
+        state.error = action.payload || 'Failed to update profile';
       })
   },
 });

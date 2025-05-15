@@ -16,6 +16,8 @@ interface MyBooking {
     guest_phone: string
     guest_special_requests: string
     paypal_order_id: string
+    review: string
+    rating: number
 }
 
 interface MyBookingState {
@@ -66,6 +68,29 @@ export const cancelBooking = createAsyncThunk<
         }
     }
 )
+
+export const addReview = createAsyncThunk(
+    "booking/addReview",
+    async (
+      {
+        bookingId,
+        rating,
+        review,
+      }: { bookingId: string; rating: number; review: string },
+      { rejectWithValue }
+    ) => {
+      try {
+      const response = await api.post(`/bookings/${bookingId}/add_review`, {
+        rating,
+        review,
+      })
+      return response.data
+    } catch (error: any) {
+        const message = error.response?.data?.message || error.message || 'Failed to add review'
+        return rejectWithValue(message)
+    }
+    }
+  )
 
 const myBookingSlice = createSlice({
     name: 'myBooking',
